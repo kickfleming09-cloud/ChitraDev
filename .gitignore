@@ -1,0 +1,65 @@
+# Local secrets and machine-specific config
+.env
+.env.*
+!.env.example
+
+# Python/runtime artifacts
+.cache/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+logs/
+*.log
+
+# Generated app output and local input media
+outputs/
+tmp/
+uploads/
+input/
+inputs/
+local_media/
+
+# Local image/video/archive files
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.bmp
+*.tif
+*.tiff
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.zip
+
+# Large local model/checkpoint files
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.bin
+
+# Allow deliberate app assets if you add them later
+!app/static/
+!app/static/**
+
+# Test/tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Separate frontend repository
+frontend/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

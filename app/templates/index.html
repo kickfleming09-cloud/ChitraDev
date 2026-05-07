@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ChitraDev is a local Stable Diffusion and FaceID image generation app with no hosted quotas and no repo-imposed creative category blocks.">
+    <title>ChitraDev</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f3f1eb;
+            --panel: #fffdf8;
+            --ink: #17140f;
+            --muted: #6d6357;
+            --accent: #116466;
+            --accent-2: #d97d54;
+            --line: #ddd3c5;
+            --danger: #8a1c1c;
+            --danger-bg: #fde8e8;
+            --warn: #7b4b00;
+            --warn-bg: #fff2d8;
+            --shadow: 0 18px 40px rgba(23, 20, 15, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(217, 125, 84, 0.18), transparent 30%),
+                radial-gradient(circle at top right, rgba(17, 100, 102, 0.12), transparent 28%),
+                linear-gradient(180deg, #f9f6f0 0%, var(--bg) 100%);
+            min-height: 100vh;
+        }
+
+        main {
+            width: min(1040px, calc(100% - 32px));
+            margin: 32px auto 48px;
+        }
+
+        .hero {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            margin: 0 0 12px;
+            font-size: clamp(2rem, 4vw, 3rem);
+            line-height: 1.05;
+            letter-spacing: -0.04em;
+        }
+
+        .hero p,
+        .note,
+        .field-help {
+            color: var(--muted);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+
+        form {
+            display: grid;
+            gap: 16px;
+        }
+
+        label {
+            display: grid;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        input,
+        textarea,
+        button {
+            font: inherit;
+        }
+
+        input[type="number"],
+        input[type="text"],
+        select,
+        textarea,
+        input[type="file"] {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px 14px;
+            background: #fff;
+            color: var(--ink);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .primary-prompt {
+            min-height: 220px;
+        }
+
+        details {
+            border: 1px dashed var(--line);
+            border-radius: 18px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        details summary {
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 999px;
+            padding: 14px 18px;
+            background: linear-gradient(135deg, var(--accent), #1c8e84);
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.18s ease, opacity 0.18s ease;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .upload-preview {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 20px;
+            border: 1px solid var(--line);
+            overflow: hidden;
+            background:
+                linear-gradient(135deg, rgba(17, 100, 102, 0.08), rgba(217, 125, 84, 0.12));
+            display: grid;
+            place-items: center;
+            color: var(--muted);
+            text-align: center;
+            padding: 16px;
+        }
+
+        .upload-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .status,
+        .error,
+        .warning {
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
+
+        .status {
+            background: rgba(17, 100, 102, 0.08);
+            color: var(--accent);
+        }
+
+        #resolved-prompt-box {
+            overflow-wrap: anywhere;
+            white-space: pre-wrap;
+        }
+
+        .error {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .warning {
+            background: var(--warn-bg);
+            color: var(--warn);
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .link-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            border-radius: 999px;
+            padding: 12px 18px;
+            font-weight: 700;
+            border: 1px solid var(--line);
+            color: var(--ink);
+            background: white;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .card img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            display: block;
+            background: #ece6db;
+        }
+
+        .card-body {
+            padding: 14px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .card-title {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        @media (max-width: 860px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .hero,
+            .panel {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <section class="hero">
+        <h1>ChitraDev</h1>
+        <p>
+            Generate Stable Diffusion 1.5 images from a prompt, with optional FaceID reference photos, entirely on your own machine.
+            ChitraDev adds no hosted image-generation quotas, remote credits, or repo-imposed creative category blocks.
+        </p>
+        <p class="note">
+            Prompt-only generation works without face uploads. Add Person 1 or Person 2 images only when you want identity guidance.
+            The first run may take a few minutes while models download into the local cache.
+        </p>
+        <p>
+            <a class="link-button" href="/batch" target="_blank" rel="noreferrer">Open batch creator</a>
+        </p>
+    </section>
+
+    <section class="layout">
+        <div class="panel">
+            <form id="generator-form">
+                <label>
+                    Prompt
+                    <textarea class="primary-prompt" name="prompt" placeholder="Create a premium, high-speed vector logo for a racing company named Apex Velocity. Style: futuristic motorsport, luxury racing brand. Colors: black, red, silver, white. Output: transparent background, high contrast, no mockup, no extra text." required></textarea>
+                    <span class="field-help">Describe the overall scene, logo, brand, product, environment, lighting, style, colors, typography, output, and avoid instructions.</span>
+                </label>
+
+                <label>
+                    Person 1 face image
+                    <input id="face-image" name="face_image" type="file" accept="image/*">
+                    <span class="field-help">Optional. Leave empty for prompt-only generation, or use one clear front-facing photo for FaceID.</span>
+                </label>
+
+                <div class="upload-preview">
+                    <img id="face-preview-image" alt="Face preview">
+                    <p id="face-preview-empty">Your uploaded face preview will appear here.</p>
+                </div>
+
+                <label>
+                    Person 1 role and action
+                    <textarea name="person1_prompt" placeholder="wearing a charcoal suit, smiling, reaching a hand toward Person 2"></textarea>
+                    <span class="field-help">Used only when Person 1 face image is added.</span>
+                </label>
+
+                <label>
+                    Person 2 face image
+                    <input id="face-image-2" name="face_image_2" type="file" accept="image/*">
+                    <span class="field-help">Optional. Leave this empty for a one-person image, or add it when you want two separate identities in one scene.</span>
+                </label>
+
+                <div class="upload-preview">
+                    <img id="face-preview-image-2" alt="Face preview for person 2">
+                    <p id="face-preview-empty-2">Person 2 preview will appear here when added.</p>
+                </div>
+
+                <label>
+                    Person 2 role and action
+                    <textarea name="person2_prompt" placeholder="wearing a red coat, laughing, leaning toward Person 1"></textarea>
+                    <span class="field-help">Used only when Person 2 face image is added.</span>
+                </label>
+
+                <label>
+                    Interaction or relationship
+                    <textarea name="interaction_prompt" placeholder="Person 1 is handing a coffee to Person 2 while they walk together through the city"></textarea>
+                    <span class="field-help">Explain what Person 1 and Person 2 are doing with each other so the scene stays controllable.</span>
+                </label>
+
+                <label>
+                    Negative prompt
+                    <textarea name="negative_prompt">{{ defaults.negative_prompt }}</textarea>
+                </label>
+
+                <details>
+                    <summary>Advanced settings</summary>
+                    <div class="grid">
+                        <label>
+                            Width
+                            <input type="number" name="width" value="{{ defaults.width }}" min="256" max="{{ limits.max_width }}" step="64">
+                        </label>
+                        <label>
+                            Height
+                            <input type="number" name="height" value="{{ defaults.height }}" min="256" max="{{ limits.max_height }}" step="64">
+                        </label>
+                        <label>
+                            Steps
+                            <input type="number" name="steps" value="{{ defaults.steps }}" min="1" max="{{ limits.max_steps }}">
+                        </label>
+                        <label>
+                            Guidance scale
+                            <input type="number" name="guidance_scale" value="{{ defaults.guidance_scale }}" min="1" max="{{ limits.max_guidance_scale }}" step="0.1">
+                        </label>
+                        <label>
+                            Seed
+                            <input type="number" name="seed" min="0" max="4294967295" placeholder="Random">
+                        </label>
+                        <label>
+                            FaceID scale
+                            <input type="number" name="ip_adapter_scale" value="{{ defaults.ip_adapter_scale }}" min="0" max="1.5" step="0.05">
+                        </label>
+                        <label>
+                            Number of images
+                            <input type="number" name="num_images" value="{{ defaults.num_images }}" min="1" max="{{ limits.max_num_images }}">
+                        </label>
+                        <label>
+                            Person 1 side
+                            <select name="person1_position">
+                                <option value="left" {% if defaults.person1_position == "left" %}selected{% endif %}>Left</option>
+                                <option value="right" {% if defaults.person1_position == "right" %}selected{% endif %}>Right</option>
+                            </select>
+                        </label>
+                        <label>
+                            Person 2 side
+                            <select name="person2_position">
+                                <option value="right" {% if defaults.person2_position == "right" %}selected{% endif %}>Right</option>
+                                <option value="left" {% if defaults.person2_position == "left" %}selected{% endif %}>Left</option>
+                            </select>
+                        </label>
+                    </div>
+                    <p class="note">For this 4 GB VRAM setup, 512x512 and 1 image per run are the most hardware-friendly defaults. Raise the .env caps when your machine can handle larger or longer jobs. FaceID scale only affects runs with face images. In two-face mode, keep Person 1 and Person 2 on opposite sides for the cleanest identity separation.</p>
+                </details>
+
+                <button id="generate-button" type="submit">Generate images</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <div id="status-box" class="status" hidden></div>
+            <div id="error-box" class="error" hidden></div>
+            <div id="warning-box" class="warning" hidden></div>
+            <div id="resolved-prompt-box" class="status" hidden></div>
+
+            <div class="actions">
+                <a id="zip-link" class="link-button" href="#" hidden download>Download all ZIP</a>
+            </div>
+
+            <div id="results-gallery" class="gallery"></div>
+        </div>
+    </section>
+</main>
+
+<script>
+    const form = document.getElementById("generator-form");
+    const generateButton = document.getElementById("generate-button");
+    const statusBox = document.getElementById("status-box");
+    const errorBox = document.getElementById("error-box");
+    const warningBox = document.getElementById("warning-box");
+    const resolvedPromptBox = document.getElementById("resolved-prompt-box");
+    const gallery = document.getElementById("results-gallery");
+    const zipLink = document.getElementById("zip-link");
+    const faceInput = document.getElementById("face-image");
+    const facePreviewImage = document.getElementById("face-preview-image");
+    const facePreviewEmpty = document.getElementById("face-preview-empty");
+    const faceInput2 = document.getElementById("face-image-2");
+    const facePreviewImage2 = document.getElementById("face-preview-image-2");
+    const facePreviewEmpty2 = document.getElementById("face-preview-empty-2");
+    let facePreviewObjectUrl = null;
+    let facePreviewObjectUrl2 = null;
+
+    function setBusy(isBusy, message = "") {
+        generateButton.disabled = isBusy;
+        generateButton.textContent = isBusy ? "Generating..." : "Generate images";
+        if (message) {
+            statusBox.textContent = message;
+            statusBox.hidden = false;
+        }
+    }
+
+    function clearMessages() {
+        statusBox.hidden = true;
+        errorBox.hidden = true;
+        warningBox.hidden = true;
+        resolvedPromptBox.hidden = true;
+        statusBox.textContent = "";
+        errorBox.textContent = "";
+        warningBox.textContent = "";
+        resolvedPromptBox.textContent = "";
+    }
+
+    function resetResults() {
+        gallery.innerHTML = "";
+        zipLink.hidden = true;
+        zipLink.removeAttribute("href");
+    }
+
+    function showError(message) {
+        statusBox.hidden = true;
+        errorBox.textContent = message;
+        errorBox.hidden = false;
+    }
+
+    function showWarning(message) {
+        if (!message) {
+            warningBox.hidden = true;
+            warningBox.textContent = "";
+            return;
+        }
+        warningBox.textContent = message;
+        warningBox.hidden = false;
+    }
+
+    function renderResults(payload) {
+        statusBox.hidden = false;
+        statusBox.textContent = `Finished job ${payload.job_id} with seed ${payload.seed}.`;
+        showWarning(payload.warning);
+        resetResults();
+        resolvedPromptBox.hidden = false;
+        resolvedPromptBox.textContent = `Resolved prompt: ${payload.resolved_prompt}`;
+
+        payload.images.forEach((item, index) => {
+            const card = document.createElement("article");
+            card.className = "card";
+
+            const image = document.createElement("img");
+            image.src = item.preview_url;
+            image.alt = `Generated image ${index + 1}`;
+
+            const body = document.createElement("div");
+            body.className = "card-body";
+
+            const title = document.createElement("h3");
+            title.className = "card-title";
+            title.textContent = item.file_name;
+
+            const download = document.createElement("a");
+            download.className = "link-button";
+            download.href = item.download_url;
+            download.download = item.file_name;
+            download.textContent = "Download image";
+
+            body.appendChild(title);
+            body.appendChild(download);
+            card.appendChild(image);
+            card.appendChild(body);
+            gallery.appendChild(card);
+        });
+
+        zipLink.href = payload.zip_url;
+        zipLink.hidden = false;
+    }
+
+    async function readResponsePayload(response) {
+        const bodyText = await response.text();
+        if (!bodyText) {
+            return {};
+        }
+
+        try {
+            return JSON.parse(bodyText);
+        } catch (error) {
+            if (!response.ok) {
+                return { detail: response.statusText || "Generation failed." };
+            }
+            throw new Error("The server returned an invalid response.");
+        }
+    }
+
+    function updateUploadPreview(file, imageElement, emptyElement, previousObjectUrl) {
+        if (previousObjectUrl) {
+            URL.revokeObjectURL(previousObjectUrl);
+        }
+
+        if (!file) {
+            imageElement.style.display = "none";
+            imageElement.removeAttribute("src");
+            emptyElement.hidden = false;
+            return null;
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+        imageElement.src = objectUrl;
+        imageElement.style.display = "block";
+        emptyElement.hidden = true;
+        return objectUrl;
+    }
+
+    faceInput.addEventListener("change", (event) => {
+        facePreviewObjectUrl = updateUploadPreview(
+            event.target.files[0],
+            facePreviewImage,
+            facePreviewEmpty,
+            facePreviewObjectUrl,
+        );
+    });
+
+    faceInput2.addEventListener("change", (event) => {
+        facePreviewObjectUrl2 = updateUploadPreview(
+            event.target.files[0],
+            facePreviewImage2,
+            facePreviewEmpty2,
+            facePreviewObjectUrl2,
+        );
+    });
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearMessages();
+        resetResults();
+
+        const formData = new FormData(form);
+        const hasFirstFace = faceInput.files.length > 0;
+        const hasSecondFace = faceInput2.files.length > 0;
+        const person1Prompt = String(formData.get("person1_prompt") || "").trim();
+        const person2Prompt = String(formData.get("person2_prompt") || "").trim();
+        const interactionPrompt = String(formData.get("interaction_prompt") || "").trim();
+        const person1Position = String(formData.get("person1_position") || "left");
+        const person2Position = String(formData.get("person2_position") || "right");
+
+        if (!hasFirstFace && hasSecondFace) {
+            showError("Upload Person 1 face image before adding Person 2.");
+            return;
+        }
+
+        if (!hasFirstFace && (person1Prompt || person2Prompt || interactionPrompt)) {
+            showError("Upload a face image to use FaceID person controls, or put the full description in the main prompt.");
+            return;
+        }
+
+        if (hasFirstFace && !hasSecondFace && (person2Prompt || interactionPrompt)) {
+            showError("Upload a second face image to use Person 2 or interaction controls.");
+            return;
+        }
+
+        if (hasSecondFace && person1Position === person2Position) {
+            showError("For two-face mode, Person 1 and Person 2 must use different sides.");
+            return;
+        }
+
+        setBusy(true, "Preparing your local generation job...");
+
+        try {
+            const response = await fetch("/api/generate", {
+                method: "POST",
+                body: formData,
+            });
+
+            const payload = await readResponsePayload(response);
+            if (!response.ok) {
+                throw new Error(payload.detail || `Generation failed with status ${response.status}.`);
+            }
+
+            renderResults(payload);
+        } catch (error) {
+            showError(error.message || "Generation failed.");
+        } finally {
+            setBusy(false);
+        }
+    });
+</script>
+</body>
+</html>

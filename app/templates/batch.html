@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ChitraDev batch creator for long local image generation runs.">
+    <title>ChitraDev Batch Creator</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f3f1eb;
+            --panel: #fffdf8;
+            --ink: #17140f;
+            --muted: #6d6357;
+            --accent: #116466;
+            --accent-2: #d97d54;
+            --line: #ddd3c5;
+            --danger: #8a1c1c;
+            --danger-bg: #fde8e8;
+            --warn: #7b4b00;
+            --warn-bg: #fff2d8;
+            --shadow: 0 18px 40px rgba(23, 20, 15, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(217, 125, 84, 0.18), transparent 30%),
+                radial-gradient(circle at top right, rgba(17, 100, 102, 0.12), transparent 28%),
+                linear-gradient(180deg, #f9f6f0 0%, var(--bg) 100%);
+            min-height: 100vh;
+        }
+
+        main {
+            width: min(1180px, calc(100% - 32px));
+            margin: 32px auto 48px;
+        }
+
+        .hero,
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .hero {
+            display: grid;
+            gap: 14px;
+            margin-bottom: 20px;
+            padding: 28px;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(2rem, 4vw, 3rem);
+            line-height: 1.05;
+            letter-spacing: -0.04em;
+        }
+
+        .hero p,
+        .note,
+        .field-help {
+            color: var(--muted);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(340px, 470px) minmax(0, 1fr);
+            gap: 20px;
+        }
+
+        .panel {
+            padding: 24px;
+        }
+
+        form {
+            display: grid;
+            gap: 16px;
+        }
+
+        label {
+            display: grid;
+            gap: 8px;
+            font-weight: 700;
+        }
+
+        input,
+        textarea,
+        button {
+            font: inherit;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px 14px;
+            background: white;
+            color: var(--ink);
+        }
+
+        textarea {
+            min-height: 220px;
+            resize: vertical;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        button,
+        .link-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            border-radius: 999px;
+            padding: 12px 18px;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        button {
+            border: 0;
+            background: linear-gradient(135deg, var(--accent), #1c8e84);
+            color: white;
+            cursor: pointer;
+        }
+
+        button.secondary {
+            border: 1px solid var(--line);
+            background: white;
+            color: var(--ink);
+        }
+
+        button.danger {
+            background: var(--danger);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .link-button {
+            border: 1px solid var(--line);
+            background: white;
+            color: var(--ink);
+        }
+
+        .status,
+        .error,
+        .warning {
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            overflow-wrap: anywhere;
+        }
+
+        .status {
+            background: rgba(17, 100, 102, 0.08);
+            color: var(--accent);
+        }
+
+        .error {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .warning {
+            background: var(--warn-bg);
+            color: var(--warn);
+        }
+
+        .progress-shell {
+            overflow: hidden;
+            height: 16px;
+            border-radius: 999px;
+            background: #e3d9cc;
+            margin: 10px 0 18px;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            transition: width 0.3s ease;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .metric {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: white;
+            padding: 14px;
+        }
+
+        .metric span {
+            display: block;
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .metric strong {
+            display: block;
+            margin-top: 6px;
+            font-size: 1.25rem;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+        }
+
+        .card {
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: white;
+        }
+
+        .card img {
+            display: block;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            background: #ece6db;
+        }
+
+        .card a {
+            display: block;
+            padding: 10px 12px;
+            color: var(--ink);
+            font-size: 0.88rem;
+            font-weight: 700;
+            text-decoration: none;
+            overflow-wrap: anywhere;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        @media (max-width: 900px) {
+            .layout,
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero,
+            .panel {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <section class="hero">
+        <h1>ChitraDev Batch Creator</h1>
+        <p>
+            Use this separate window for long local runs that create dozens or hundreds of outputs from the same prompt.
+            ChitraDev chunks the work, saves every image into one batch folder, and creates a ZIP when the job finishes or stops.
+        </p>
+        <div class="actions">
+            <a class="link-button" href="/" target="_blank" rel="noreferrer">Open standard generator</a>
+        </div>
+    </section>
+
+    <section class="layout">
+        <div class="panel">
+            <form id="batch-form">
+                <label>
+                    Prompt
+                    <textarea name="prompt" placeholder="Create 100 premium vector logo variations for Apex Velocity, futuristic motorsport, black red silver white, transparent background, sharp racing lines, no mockup, no extra text." required></textarea>
+                    <span class="field-help">This prompt is reused for every output. Structured logo prompts are compacted before generation.</span>
+                </label>
+
+                <label>
+                    Negative prompt
+                    <textarea name="negative_prompt">{{ defaults.negative_prompt }}</textarea>
+                </label>
+
+                <div class="grid">
+                    <label>
+                        Total outputs
+                        <input type="number" name="total_images" value="{{ defaults.total_images }}" min="1" max="{{ limits.max_batch_total_images }}">
+                        <span class="field-help">Maximum from settings: {{ limits.max_batch_total_images }}</span>
+                    </label>
+                    <label>
+                        Images per chunk
+                        <input type="number" name="chunk_size" value="{{ defaults.chunk_size }}" min="1" max="{{ limits.max_batch_chunk_size }}">
+                        <span class="field-help">Lower is slower but safer for VRAM.</span>
+                    </label>
+                    <label>
+                        Width
+                        <input type="number" name="width" value="{{ defaults.width }}" min="256" max="{{ limits.max_width }}" step="64">
+                    </label>
+                    <label>
+                        Height
+                        <input type="number" name="height" value="{{ defaults.height }}" min="256" max="{{ limits.max_height }}" step="64">
+                    </label>
+                    <label>
+                        Steps
+                        <input type="number" name="steps" value="{{ defaults.steps }}" min="1" max="{{ limits.max_steps }}">
+                    </label>
+                    <label>
+                        Guidance scale
+                        <input type="number" name="guidance_scale" value="{{ defaults.guidance_scale }}" min="1" max="{{ limits.max_guidance_scale }}" step="0.1">
+                    </label>
+                    <label>
+                        Start seed
+                        <input type="number" name="seed" min="0" max="4294967295" placeholder="Random">
+                        <span class="field-help">Optional. With chunk size 1, ChitraDev increments this seed per image.</span>
+                    </label>
+                </div>
+
+                <p class="note">
+                    Batch jobs run in the background and can take a long time. Keep this window open to watch progress, or return with the job URL while the server is still running.
+                </p>
+
+                <div class="actions">
+                    <button id="start-button" type="submit">Start batch</button>
+                    <button id="cancel-button" class="danger" type="button" hidden>Cancel after current chunk</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="panel">
+            <div id="status-box" class="status">No batch is running yet.</div>
+            <div id="warning-box" class="warning" hidden></div>
+            <div id="error-box" class="error" hidden></div>
+
+            <div class="progress-shell" aria-label="Batch progress">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+
+            <div class="summary-grid">
+                <div class="metric">
+                    <span>Status</span>
+                    <strong id="status-value">Idle</strong>
+                </div>
+                <div class="metric">
+                    <span>Completed</span>
+                    <strong id="completed-value">0 / 0</strong>
+                </div>
+                <div class="metric">
+                    <span>Chunk size</span>
+                    <strong id="chunk-value">0</strong>
+                </div>
+            </div>
+
+            <div class="actions">
+                <a id="zip-link" class="link-button" href="#" hidden download>Download batch ZIP</a>
+            </div>
+
+            <div id="gallery" class="gallery"></div>
+        </div>
+    </section>
+</main>
+
+<script>
+    const form = document.getElementById("batch-form");
+    const startButton = document.getElementById("start-button");
+    const cancelButton = document.getElementById("cancel-button");
+    const statusBox = document.getElementById("status-box");
+    const warningBox = document.getElementById("warning-box");
+    const errorBox = document.getElementById("error-box");
+    const progressBar = document.getElementById("progress-bar");
+    const statusValue = document.getElementById("status-value");
+    const completedValue = document.getElementById("completed-value");
+    const chunkValue = document.getElementById("chunk-value");
+    const zipLink = document.getElementById("zip-link");
+    const gallery = document.getElementById("gallery");
+    let activeJobId = null;
+    let pollTimer = null;
+
+    async function readResponsePayload(response) {
+        const bodyText = await response.text();
+        if (!bodyText) {
+            return {};
+        }
+        try {
+            return JSON.parse(bodyText);
+        } catch (error) {
+            if (!response.ok) {
+                return { detail: response.statusText || "Batch request failed." };
+            }
+            throw new Error("The server returned an invalid response.");
+        }
+    }
+
+    function setRunning(isRunning) {
+        startButton.disabled = isRunning;
+        cancelButton.hidden = !isRunning;
+    }
+
+    function showWarning(message) {
+        warningBox.hidden = !message;
+        warningBox.textContent = message || "";
+    }
+
+    function showError(message) {
+        errorBox.hidden = !message;
+        errorBox.textContent = message || "";
+    }
+
+    function renderStatus(payload) {
+        const status = payload.status || "unknown";
+        statusBox.textContent = `Batch ${payload.job_id}: ${status}.`;
+        statusValue.textContent = status;
+        completedValue.textContent = `${payload.completed_images || 0} / ${payload.total_images || 0}`;
+        chunkValue.textContent = payload.chunk_size || 0;
+        progressBar.style.width = `${payload.percent || 0}%`;
+        showWarning(payload.warning);
+        showError(payload.error);
+
+        if (payload.zip_url) {
+            zipLink.href = payload.zip_url;
+            zipLink.hidden = false;
+        } else {
+            zipLink.hidden = true;
+            zipLink.removeAttribute("href");
+        }
+
+        gallery.innerHTML = "";
+        (payload.preview_images || []).forEach((item) => {
+            const card = document.createElement("article");
+            card.className = "card";
+
+            const image = document.createElement("img");
+            image.src = item.preview_url;
+            image.alt = item.file_name;
+
+            const link = document.createElement("a");
+            link.href = item.download_url;
+            link.download = item.file_name;
+            link.textContent = item.file_name;
+
+            card.appendChild(image);
+            card.appendChild(link);
+            gallery.appendChild(card);
+        });
+
+        const stillRunning = status === "queued" || status === "running";
+        setRunning(stillRunning);
+        if (!stillRunning && pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
+    }
+
+    async function pollStatus() {
+        if (!activeJobId) {
+            return;
+        }
+        const response = await fetch(`/api/batch/${activeJobId}`);
+        const payload = await readResponsePayload(response);
+        if (!response.ok) {
+            throw new Error(payload.detail || `Status failed with ${response.status}.`);
+        }
+        renderStatus(payload);
+    }
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        showError("");
+        showWarning("");
+        zipLink.hidden = true;
+        gallery.innerHTML = "";
+        setRunning(true);
+        statusBox.textContent = "Creating batch job...";
+
+        try {
+            const response = await fetch("/api/batch", {
+                method: "POST",
+                body: new FormData(form),
+            });
+            const payload = await readResponsePayload(response);
+            if (!response.ok) {
+                throw new Error(payload.detail || `Batch failed with status ${response.status}.`);
+            }
+            activeJobId = payload.job_id;
+            renderStatus(payload);
+            if (pollTimer) {
+                clearInterval(pollTimer);
+            }
+            pollTimer = setInterval(() => {
+                pollStatus().catch((error) => showError(error.message || "Could not refresh batch status."));
+            }, 3000);
+            await pollStatus();
+        } catch (error) {
+            setRunning(false);
+            showError(error.message || "Batch could not be started.");
+        }
+    });
+
+    cancelButton.addEventListener("click", async () => {
+        if (!activeJobId) {
+            return;
+        }
+        cancelButton.disabled = true;
+        try {
+            const response = await fetch(`/api/batch/${activeJobId}/cancel`, { method: "POST" });
+            const payload = await readResponsePayload(response);
+            if (!response.ok) {
+                throw new Error(payload.detail || `Cancel failed with status ${response.status}.`);
+            }
+            renderStatus(payload);
+        } catch (error) {
+            showError(error.message || "Could not request cancellation.");
+        } finally {
+            cancelButton.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>
